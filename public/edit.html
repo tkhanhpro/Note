@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TK Notes - Chỉnh Sửa Code Siêu VIP</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/dialog/dialog.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #0a0f1a);
+            color: #e0e7ff;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .info-bar {
+            background: linear-gradient(90deg, #00ffcc, #a855f7);
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-bar h1 {
+            font-size: 22px;
+            color: #1a1a2e;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.7);
+        }
+
+        .menu-toggle {
+            font-size: 22px;
+            cursor: pointer;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .menu-toggle:hover {
+            transform: rotate(90deg);
+            color: #a855f7;
+        }
+
+        .menu {
+            display: none;
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 0 12px rgba(0, 255, 204, 0.2);
+            z-index: 10;
+        }
+
+        .menu.active {
+            display: block;
+        }
+
+        .menu button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #00ffcc, #a855f7);
+            color: #1a1a2e;
+            cursor: pointer;
+            width: 120px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .menu button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.5);
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            height: calc(100% - 70px);
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 12px rgba(0, 255, 204, 0.1);
+            overflow: hidden;
+        }
+
+        .line-numbers {
+            width: 40px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 5px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: right;
+            font-size: 12px;
+            color: #a0a0a0;
+            overflow-y: auto;
+        }
+
+        .editor-area {
+            flex: 1;
+            padding: 0 15px 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .CodeMirror {
+            height: calc(100% - 50px);
+            border-radius: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            box-shadow: none;
+            resize: horizontal;
+            overflow: auto;
+            min-height: 400px;
+            min-width: 600px;
+            border-left: none;
+        }
+
+        .CodeMirror-scroll {
+            max-width: 100%;
+        }
+
+        .status-bar {
+            padding: 10px;
+            font-size: 12px;
+            color: #a0a0a0;
+            text-align: right;
+            background: rgba(255, 255, 255, 0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #00ffcc, #a855f7);
+            color: #1a1a2e;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.5);
+        }
+
+        button.cancel {
+            background: linear-gradient(45deg, #ff4d4d, #ff6b6b);
+            color: #fff;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                padding: 10px;
+            }
+
+            .info-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .editor-container {
+                flex-direction: column;
+            }
+
+            .line-numbers {
+                width: 100%;
+                height: 20px;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .editor-area {
+                width: 100%;
+                border-radius: 0 0 10px 10px;
+            }
+
+            .CodeMirror {
+                height: 400px;
+                min-width: 100%;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="info-bar">
+            <h1>TK Notes</h1>
+            <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+            <div class="menu" id="menu">
+                <button onclick="window.location.href='/'">Tạo Note</button>
+            </div>
+        </div>
+        <div class="editor-container">
+            <div class="line-numbers" id="lineNumbers"></div>
+            <div class="editor-area">
+                <textarea id="noteEditor"></textarea>
+                <div class="actions">
+                    <button onclick="saveNoteManually()">Lưu Ngay</button>
+                    <button class="cancel" onclick="window.location.href='/'">Hủy</button>
+                </div>
+                <div class="status-bar" id="statusBar">Trạng thái: Chưa lưu</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/search/jump-to-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/addon/dialog/dialog.min.js"></script>
+    <script>
+        const noteId = window.location.pathname.split('/').pop();
+        let editor;
+        let saveTimeout;
+
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            menu.classList.toggle('active');
+        }
+
+        function updateLineNumbers() {
+            const lineCount = editor ? editor.lineCount() : 0;
+            let lines = '';
+            for (let i = 1; i <= lineCount; i++) {
+                lines += i + '\n';
+            }
+            document.getElementById('lineNumbers').innerText = lines;
+        }
+
+        async function loadNote() {
+            const response = await fetch(`/api/notes/${noteId}`);
+            if (!response.ok) {
+                alert('Code không tồn tại!');
+                window.location.href = '/';
+                return;
+            }
+            const note = await response.json();
+
+            editor = CodeMirror.fromTextArea(document.getElementById('noteEditor'), {
+                mode: 'javascript',
+                theme: 'dracula',
+                lineNumbers: false,
+                lineWrapping: true,
+                tabSize: 2,
+                indentWithTabs: false,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                extraKeys: {
+                    'Ctrl-Space': 'autocomplete',
+                    'Ctrl-F': 'findPersistent',
+                    'Ctrl-G': 'findNext',
+                    'Ctrl-Shift-G': 'findPrev'
+                }
+            });
+            editor.setValue(note.content);
+            updateLineNumbers();
+
+            editor.on('change', () => {
+                updateLineNumbers();
+                clearTimeout(saveTimeout);
+                document.getElementById('statusBar').innerText = 'Trạng thái: Đang lưu...';
+                saveTimeout = setTimeout(autoSave, 1500);
+            });
+        }
+
+        async function autoSave() {
+            const content = editor.getValue().trim();
+            if (!content) {
+                document.getElementById('statusBar').innerText = 'Trạng thái: Chưa lưu (trống)';
+                return;
+            }
+
+            const response = await fetch(`/api/notes/${noteId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            if (response.ok) {
+                const note = await response.json();
+                document.getElementById('statusBar').innerText = `Trạng thái: Đã lưu tại ${new Date().toLocaleString('vi-VN')}`;
+            } else {
+                document.getElementById('statusBar').innerText = 'Trạng thái: Lỗi khi lưu';
+            }
+        }
+
+        async function saveNoteManually() {
+            const content = editor.getValue().trim();
+            if (!content) {
+                alert('Vui lòng nhập mã code!');
+                return;
+            }
+
+            const response = await fetch(`/api/notes/${noteId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            if (response.ok) {
+                const note = await response.json();
+                document.getElementById('statusBar').innerText = `Trạng thái: Đã lưu tại ${new Date().toLocaleString('vi-VN')}`;
+            } else {
+                alert('Lỗi khi lưu code!');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadNote);
+    </script>
+</body>
+</html>
