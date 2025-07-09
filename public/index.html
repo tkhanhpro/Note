@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodePad - Tạo Note Chuyên Nghiệp</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e1e2f, #0a0f1a);
+            color: #e0e7ff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 25px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .profile img {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid #00ffcc;
+            margin-bottom: 10px;
+            transition: transform 0.3s;
+        }
+
+        .profile img:hover {
+            transform: scale(1.1);
+        }
+
+        .profile h3 {
+            color: #00ffcc;
+            font-size: 16px;
+            font-weight: 500;
+            text-shadow: 0 0 5px rgba(0, 255, 204, 0.6);
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .menu button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #00ffcc, #a855f7);
+            color: #1a1a2e;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .menu button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.5);
+            background: linear-gradient(45deg, #a855f7, #00ffcc);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .editor-header {
+            background: linear-gradient(90deg, #00ffcc, #a855f7);
+            padding: 15px;
+            border-radius: 10px 10px 0 0;
+            color: #1a1a2e;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(0, 255, 204, 0.7);
+        }
+
+        .editor-body {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 12px rgba(0, 255, 204, 0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #noteInput {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e7ff;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            resize: vertical;
+            transition: box-shadow 0.3s;
+        }
+
+        #noteInput:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        .options {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        select {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e7ff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        .result {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 6px;
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #resultMessage {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        #rawBtn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #00ffcc, #a855f7);
+            color: #1a1a2e;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        #rawBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.5);
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 180px;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .options {
+                flex-direction: column;
+            }
+
+            select, button, #rawBtn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="profile">
+                <img src="https://via.placeholder.com/70" alt="Avatar">
+                <h3>Nguyen Van A</h3>
+            </div>
+            <div class="menu">
+                <button onclick="addNote()">Tạo Note</button>
+                <button>Thông tin</button>
+                <button>Đăng xuất</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="editor-header">Tạo Note Mới</div>
+            <div class="editor-body">
+                <textarea id="noteInput" rows="10" placeholder="Nhập mã code của bạn..."></textarea>
+                <div class="options">
+                    <select id="encodingSelect">
+                        <option value="utf-8">UTF-8</option>
+                        <option value="utf-16">UTF-16</option>
+                        <option value="ascii">ASCII</option>
+                    </select>
+                    <button onclick="createNote()">Tạo Note</button>
+                </div>
+                <div class="result" id="result">
+                    <p id="resultMessage"></p>
+                    <button id="rawBtn" onclick="accessRaw()" style="display: none;">Raw</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function createNote() {
+            const noteInput = document.getElementById('noteInput');
+            const content = noteInput.value.trim();
+            const encoding = document.getElementById('encodingSelect').value;
+            if (!content) {
+                alert('Vui lòng nhập mã code!');
+                return;
+            }
+
+            const response = await fetch('/api/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, encoding })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const result = document.getElementById('result');
+                result.style.display = 'block';
+                document.getElementById('resultMessage').innerText = `Note created with ID: ${data.id} tại ${new Date().toLocaleString('vi-VN')}`;
+                document.getElementById('rawBtn').style.display = 'block';
+                document.getElementById('rawBtn').onclick = () => window.open(data.url, '_blank');
+            }
+        }
+
+        function accessRaw() {
+            if (confirm('Bạn có muốn truy cập link Raw không?')) {
+                const rawBtn = document.getElementById('rawBtn');
+                if (rawBtn.onclick) rawBtn.onclick();
+            }
+        }
+    </script>
+</body>
+</html>
