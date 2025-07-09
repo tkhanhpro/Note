@@ -1,81 +1,81 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const app = express();
-const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Lưu trữ ghi chú trong bộ nhớ
-let notes = {};
+// File để lưu notes
+const NOTES_FILE = 'notes.json';
 
-// API: Lấy danh sách UUID ghi chú
+// Khởi tạo file notes nếu chưa tồn tại
+if (!fs.existsSync(NOTES_FILE)) {
+    fs.writeFileSync(NOTES_FILE, '{}');
+}
+
+// Lấy tất cả notes
 app.get('/api/notes', (req, res) => {
-    res.json(Object.keys(notes));
+    const notes = JSON.parse(fs.readFileSync(NOTES_FILE));
+    res.json(notes);
 });
 
-// API: Tạo ghi chú mới
+// Tạo note mới
 app.post('/api/notes', (req, res) => {
-    const { content, encoding } = req.body;
-    if (!content) return res.status(400).json({ error: 'Content is required' });
-
+    const notes = JSON.parse(fs.readFileSync(NOTES_FILE));
     const id = uuidv4();
-    notes[id] = {
-        content,
-        encoding: encoding || 'utf-8',
-        createdAt: new Date().toLocaleString('vi-VN'),
-        updatedAt: new Date().toLocaleString('vi-VN')
+    const newNote = {
+        id,
+        content: req.body.content || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
-    res.json({ id, url: `/raw/${id}` });
+    notes[id] = newNote;
+    fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2));
+    res.json(newNote);
 });
 
-// API: Lấy nội dung ghi chú
-app.get('/api/notes/:id', (req, res) => {
-    const { id } = req.params;
-    if (!notes[id]) return res.status(404).json({ error: 'Note not found' });
-    res.json(notes[id]);
-});
-
-// API: Cập nhật ghi chú
+// Cập nhật note
 app.put('/api/notes/:id', (req, res) => {
-    const { id } = req.params;
-    const { content, encoding } = req.body;
-    if (!content) return res.status(400).json({ error: 'Content is required' });
-    if (!notes[id]) return res.status(404).json({ error: 'Note not found' });
-
-    notes[id].content = content;
-    notes[id].encoding = encoding || notes[id].encoding;
-    notes[id].updatedAt = new Date().toLocaleString('vi-VN');
-    res.json(notes[id]);
+    const notes = JSON.parse(fs.readFileSync(NOTES_FILE));
+    const id = req.params.id;
+    
+    if (notes[id]) {
+        notes[id] = {
+            ...notes[id],
+            content: req.body.content || notes[id].content,
+            updatedAt: new Date().toISOString()
+        };
+        fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2));
+        res.json(notes[id]);
+    } else {
+        res.status(404).json({ error: 'Note not found' });
+    }
 });
 
-// API: Xóa ghi chú
+// Xóa note
 app.delete('/api/notes/:id', (req, res) => {
-    const { id } = req.params;
-    if (!notes[id]) return res.status(404).json({ error: 'Note not found' });
-    delete notes[id];
-    res.json({ message: 'Note deleted' });
+    const notes = JSON.parse(fs.readFileSync(NOTES_FILE));
+    const id = req.params.id;
+    
+    if (notes[id]) {
+        delete notes[id];
+        fs.writeFileSync(NOTES_FILE, JSON.stringify(notes, null, 2));
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ error: 'Note not found' });
+    }
 });
 
-// Route: Hiển thị nội dung raw
-app.get('/raw/:id', (req, res) => {
-    const { id } = req.params;
-    if (!notes[id]) return res.status(404).send('Note not found');
-    res.set('Content-Type', 'text/plain; charset=' + notes[id].encoding);
-    res.send(notes[id].content);
-});
-
-// Route: Hiển thị giao diện chỉnh sửa
-app.get('/edit/:id', (req, res) => {
-    res.sendFile(__dirname + '/public/edit.html');
-});
-
-// Route: Hiển thị giao diện chính
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
+// Route cho trang chủ
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Khởi động server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
